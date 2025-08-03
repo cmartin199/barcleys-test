@@ -1,6 +1,6 @@
 # Hono API Template
 
-A modern Node.js API template built with Hono framework featuring automatic OpenAPI documentation generation, TypeScript support, and production-ready configuration.
+A modern Node.js API built with Hono framework featuring automatic OpenAPI documentation generation, TypeScript support, and production-ready configuration.
 
 ## Features
 
@@ -25,44 +25,47 @@ A modern Node.js API template built with Hono framework featuring automatic Open
 ## Quick Start
 
 1. **Install dependencies**
+
    ```bash
    npm install hono @hono/node-server @hono/zod-openapi @hono/swagger-ui
    npm install -D typescript tsx @types/node dotenv zod
    ```
 
 2. **Set up environment**
+
    ```bash
    cp .env.example .env
    ```
 
 3. **Start development server**
+
    ```bash
    npx tsx watch src/index.ts
    ```
 
 4. **Visit the application**
-   - API: http://localhost:5000
-   - Documentation: http://localhost:5000/docs
-   - OpenAPI JSON: http://localhost:5000/openapi.json
+   - API: http://localhost:3000
+   - Documentation: http://localhost:3000/docs
+   - OpenAPI JSON: http://localhost:3000/openapi.json
 
 ## API Endpoints
 
 ### Health Check
+
 - `GET /health` - Health check endpoint
 
 ### Users
-- `GET /api/users` - Get all users (with pagination and search)
-- `GET /api/users/{id}` - Get user by ID
-- `POST /api/users` - Create new user
-- `PUT /api/users/{id}` - Update user
-- `DELETE /api/users/{id}` - Delete user
+
+- `GET /v1/users` - Get all users (with pagination and search)
+- `GET /v1/users/{id}` - Get user by ID
+- `POST /v1/users` - Create new user
+- `PUT /v1/users/{id}` - Update user
+- `DELETE /v1/users/{id}` - Delete user
 
 ### Posts
-- `GET /api/posts` - Get all posts (with filters)
-- `GET /api/posts/{id}` - Get post by ID
-- `POST /api/posts` - Create new post
-- `PUT /api/posts/{id}` - Update post
-- `DELETE /api/posts/{id}` - Delete post
 
-## Project Structure
-
+- `GET /v1/posts` - Get all posts (with filters)
+- `GET /v1/posts/{id}` - Get post by ID
+- `POST /v1/posts` - Create new post
+- `PUT /v1/posts/{id}` - Update post
+- `DELETE /v1/posts/{id}` - Delete post

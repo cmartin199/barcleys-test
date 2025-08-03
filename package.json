@@ -1,10 +1,11 @@
 {
-  "name": "workspace",
+  "name": "barcleys-test",
   "version": "1.0.0",
-  "description": "A modern Node.js API template built with Hono framework featuring automatic OpenAPI documentation generation, TypeScript support, and production-ready configuration.",
+  "description": "A modern Node.js API built with Hono framework featuring automatic OpenAPI documentation generation",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx tsx watch src/index.ts"
   },
   "keywords": [],
   "author": "",
