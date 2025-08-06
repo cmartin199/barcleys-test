@@ -4,80 +4,15 @@ import {
   CreateUserSchema,
   UpdateUserSchema,
   UserParamsSchema,
-  UserQuerySchema,
   User,
-} from "../schemas/user";
-
-const PaginatedUsersSchema = z.object({
-  data: z.array(UserSchema),
-  meta: z.object({
-    page: z.number(),
-    limit: z.number(),
-    total: z.number(),
-    totalPages: z.number(),
-  }),
-});
-
-const ErrorSchema = z.object({
-  error: z.string(),
-  message: z.string(),
-});
+} from "../schemas/users";
+import { ErrorSchema } from "../schemas/error";
 
 export const userRoutes = new OpenAPIHono();
 
 // In-memory storage for demo purposes
 // In production, replace with actual database
 let users: User[] = [];
-
-// Get all users
-const getUsersRoute = createRoute({
-  method: "get",
-  path: "/",
-  summary: "Get all users",
-  description: "Retrieve a paginated list of users with optional search",
-  tags: ["Users"],
-  request: {
-    query: UserQuerySchema,
-  },
-  responses: {
-    200: {
-      description: "List of users",
-      content: {
-        "application/json": {
-          schema: PaginatedUsersSchema,
-        },
-      },
-    },
-  },
-});
-
-userRoutes.openapi(getUsersRoute, (c) => {
-  const { page, limit, search } = c.req.valid("query");
-
-  let filteredUsers = users;
-  if (search) {
-    filteredUsers = users.filter(
-      (user) =>
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
-  const total = filteredUsers.length;
-  const totalPages = Math.ceil(total / limit);
-  const offset = (page - 1) * limit;
-  const data = filteredUsers.slice(offset, offset + limit);
-
-  return c.json({
-    data,
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages,
-    },
-  });
-});
 
 // Get user by ID
 const getUserRoute = createRoute({
@@ -98,6 +33,22 @@ const getUserRoute = createRoute({
         },
       },
     },
+    401: {
+      description: "Unauthorized - missing or invalid JWT token",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+    403: {
+      description: "Forbidden - cannot access another user's data",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
     404: {
       description: "User not found",
       content: {
@@ -111,6 +62,28 @@ const getUserRoute = createRoute({
 
 userRoutes.openapi(getUserRoute, (c) => {
   const { id } = c.req.valid("param");
+  const authHeader = c.req.header("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return c.json(
+      {
+        error: "Unauthorized",
+        message: "Missing or invalid authorization header",
+      },
+      401
+    );
+  }
+  const token = authHeader.substring("Bearer ".length);
+  const payload = verifyJwt(token);
+  if (!payload || payload.sub !== id) {
+    return c.json(
+      {
+        error: "Forbidden",
+        message: "You are not allowed to access this user's data",
+      },
+      403
+    );
+  }
+
   const user = users.find((u) => u.id === id);
 
   if (!user) {
@@ -171,17 +144,27 @@ const createUserRoute = createRoute({
 });
 
 userRoutes.openapi(createUserRoute, (c) => {
-  const userData = c.req.valid("json");
-
-  // Check if email already exists
-  const existingUser = users.find((u) => u.email === userData.email);
-  if (existingUser) {
+  let userData;
+  try {
+    userData = CreateUserSchema.parse(c.req.valid("json"));
+  } catch (err) {
     return c.json(
       {
-        error: "Conflict",
-        message: "User with this email already exists",
+        error: "Bad Request",
+        message: "Invalid user data",
       },
-      409
+      400
+    );
+  }
+
+  // Ensure password is present in the request
+  if (!userData.password || typeof userData.password !== "string") {
+    return c.json(
+      {
+        error: "Bad Request",
+        message: "Password is required",
+      },
+      400
     );
   }
 
@@ -302,4 +285,125 @@ userRoutes.openapi(deleteUserRoute, (c) => {
 
   users.splice(userIndex, 1);
   return c.body(null, 204);
+});
+
+// Add zod schema for login request and JWT response
+const LoginRequestSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
+
+const JWTResponseSchema = z.object({
+  token: z.string(),
+});
+
+// Add authentication endpoint OpenAPI spec
+const loginRoute = createRoute({
+  method: "post",
+  path: "/auth/login",
+  summary: "Authenticate user and return JWT token",
+  description:
+    "Authenticate a user with email and password, returning a JWT token for use as a Bearer token.",
+  tags: ["Auth"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: LoginRequestSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Authentication successful",
+      content: {
+        "application/json": {
+          schema: JWTResponseSchema,
+        },
+      },
+    },
+    403: {
+      description: "Invalid credentials",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+    400: {
+      description: "Bad Request",
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+    },
+  },
+  security: [], // No auth required for login
+});
+
+// Dummy secret for JWT signing (in production, use env/config)
+const JWT_SECRET = process.env.JWT_SECRET;
+
+function createJwt(payload: object): string {
+  // Minimal JWT implementation for demo (use a library like jose or jsonwebtoken in production)
+  const header = { alg: "HS256", typ: "JWT" };
+  function base64url(obj: object) {
+    return Buffer.from(JSON.stringify(obj)).toString("base64url");
+  }
+  const encodedHeader = base64url(header);
+  const encodedPayload = base64url(payload);
+  const signature = require("crypto")
+    .createHmac("sha256", JWT_SECRET)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest("base64url");
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
+
+// Helper to verify JWT and extract payload
+function verifyJwt(token: string): { sub: string; email: string } | null {
+  try {
+    const [headerB64, payloadB64, signature] = token.split(".");
+    const expectedSig = require("crypto")
+      .createHmac("sha256", JWT_SECRET)
+      .update(`${headerB64}.${payloadB64}`)
+      .digest("base64url");
+    if (expectedSig !== signature) return null;
+    const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString());
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+userRoutes.openapi(loginRoute, (c) => {
+  const { email, password } = c.req.valid("json");
+  const user = users.find((u) => u.email === email);
+  let userData;
+  try {
+    userData = CreateUserSchema.parse(c.req.valid("json"));
+  } catch (err) {
+    return c.json(
+      {
+        error: "Bad Request",
+        message: "Invalid user data",
+      },
+      400
+    );
+  }
+  if (!user || user.password !== password) {
+    return c.json(
+      {
+        error: "Unauthorized",
+        message: "Invalid email or password",
+      },
+      403
+    );
+  }
+
+  // JWT payload can include user id and email
+  const token = createJwt({ sub: user.id, email: user.email });
+
+  return c.json({ token }, 200);
 });

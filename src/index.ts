@@ -25,10 +25,10 @@ app.use(
 );
 
 // API Routes
-app.route("", health);
+app.route("/_health", health);
 
-app.route("/api/users", userRoutes);
-app.route("/api/posts", postRoutes);
+app.route("/users", userRoutes);
+app.route("/posts", postRoutes);
 
 // OpenAPI Documentation
 app.doc("/openapi.json", openapiSpec);
@@ -45,8 +45,8 @@ app.get("/", (c) => {
     version: "1.0.0",
     endpoints: {
       health: "/_health",
-      users: "/api/users",
-      posts: "/api/posts",
+      users: "/users",
+      posts: "/posts",
     },
   });
 });
@@ -66,12 +66,12 @@ app.notFound((c) => {
   );
 });
 
-console.log(`🚀 Server starting on http://localhost::${config.PORT}`);
+console.log(`🚀 Server starting on http://localhost:${config.PORT}/v1`);
 console.log(
-  `📚 API Documentation available at http://localhost::${config.PORT}/docs`
+  `📚 API Documentation available at http://localhost:${config.PORT}/v1/docs`
 );
 console.log(
-  `📋 OpenAPI JSON available at http://localhost::${config.PORT}/openapi.json`
+  `📋 OpenAPI JSON available at http://localhost:${config.PORT}/v1/openapi.json`
 );
 
 serve({

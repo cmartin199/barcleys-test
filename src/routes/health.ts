@@ -6,7 +6,7 @@ export const health = new OpenAPIHono();
 
 const healthRoute = createRoute({
   method: "get",
-  path: "/_health",
+  path: "/",
   summary: "Health Check",
   description: "Check if the API is running",
   tags: ["Health"],

@@ -1,0 +1,18 @@
+meta {
+  name: getuser-protected
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://localhost:3000/v1/users/928bf2fc-5c21-41f3-b72e-05ac0956517c
+  body: none
+  auth: inherit
+  headers {
+    Authorization: Bearer {{login.response.body.token}}
+  }
+}
+
+settings {
+  encodeUrl: true
+}
