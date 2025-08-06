@@ -8,7 +8,6 @@ import { openapiSpec } from "./schemas/openapi";
 import { config } from "./config/env";
 import { errorHandler } from "./middleware/error";
 import { userRoutes } from "./routes/users";
-import { postRoutes } from "./routes/posts";
 import { health } from "./routes/health";
 
 const app = new OpenAPIHono().basePath("/v1");
@@ -28,7 +27,6 @@ app.use(
 app.route("/_health", health);
 
 app.route("/users", userRoutes);
-app.route("/posts", postRoutes);
 
 // OpenAPI Documentation
 app.doc("/openapi.json", openapiSpec);

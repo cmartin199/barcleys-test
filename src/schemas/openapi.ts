@@ -26,18 +26,4 @@ export const openapiSpec = {
       description: "Production server",
     },
   ],
-  tags: [
-    {
-      name: "Health",
-      description: "Health check endpoints",
-    },
-    {
-      name: "Users",
-      description: "User management endpoints",
-    },
-    {
-      name: "Posts",
-      description: "Post management endpoints",
-    },
-  ],
 };
