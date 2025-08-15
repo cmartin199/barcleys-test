@@ -4,7 +4,8 @@ export const UserSchema = z.object({
   id: z.uuid(),
   email: z.email(),
   password: z.string().min(6),
-  name: z.string().min(1).max(100),
+  firstName: z.string().min(1).max(30),
+  lastName: z.string().min(1).max(30),
   age: z.number().int().min(18).max(120).optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -13,13 +14,15 @@ export const UserSchema = z.object({
 export const CreateUserSchema = z.object({
   email: z.email(),
   password: z.string().min(6),
-  name: z.string().min(1).max(100),
+  firstName: z.string().min(1).max(30),
+  lastName: z.string().min(1).max(30),
   age: z.number().int().min(18).max(120).optional(),
 });
 
 export const UpdateUserSchema = z.object({
   email: z.string().email().optional(),
-  name: z.string().min(1).max(100).optional(),
+  firstName: z.string().min(1).max(30).optional(),
+  lastName: z.string().min(1).max(30).optional(),
   age: z.number().int().min(18).max(120).optional(),
 });
 
@@ -39,8 +42,14 @@ export const UserQuerySchema = z.object({
   search: z.string().optional(),
 });
 
+export const AuthUserSchema = z.object({
+  email: z.email(),
+  password: z.string().min(6),
+});
+
 export type User = z.infer<typeof UserSchema>;
 export type CreateUser = z.infer<typeof CreateUserSchema>;
 export type UpdateUser = z.infer<typeof UpdateUserSchema>;
 export type UserParams = z.infer<typeof UserParamsSchema>;
 export type UserQuery = z.infer<typeof UserQuerySchema>;
+export type AuthUser = z.infer<typeof AuthUserSchema>;

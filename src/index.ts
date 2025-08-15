@@ -7,7 +7,7 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { openapiSpec } from "./schemas/openapi";
 import { config } from "./config/env";
 import { errorHandler } from "./middleware/error";
-import { userRoutes } from "./routes/users";
+import { authRoute, userRoutes } from "./routes/users";
 import { health } from "./routes/health";
 
 const app = new OpenAPIHono().basePath("/v1");
@@ -27,6 +27,7 @@ app.use(
 app.route("/_health", health);
 
 app.route("/users", userRoutes);
+app.route("/auth", authRoute);
 
 // OpenAPI Documentation
 app.doc("/openapi.json", openapiSpec);

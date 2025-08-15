@@ -5,6 +5,7 @@ import {
   UpdateUserSchema,
   UserParamsSchema,
   User,
+  AuthUserSchema,
 } from "../schemas/users";
 import { ErrorSchema } from "../schemas/error";
 
@@ -12,7 +13,35 @@ export const userRoutes = new OpenAPIHono();
 
 // In-memory storage for demo purposes
 // In production, replace with actual database
-let users: User[] = [];
+let users: User[] = [
+  {
+    id: "f975848b-2b95-43e7-8f54-3bb5231392cc",
+    firstName: "Happy",
+    lastName: "Gillmore",
+    email: "cat@hat.bat",
+    password: "yourpassword",
+    createdAt: "2025-08-15T12:56:36.584Z",
+    updatedAt: "2025-08-15T12:56:36.585Z",
+  },
+  {
+    id: "f975148b-2b65-43e7-8454-3bb5231392cc",
+    firstName: "Happy",
+    lastName: "Gillmore",
+    email: "cat@hat.bat",
+    password: "yourpassword",
+    createdAt: "2025-08-15T12:56:36.584Z",
+    updatedAt: "2025-08-15T12:56:36.585Z",
+  },
+  {
+    id: "g952848b-2b95-43e7-8f54-3bb5231392cc",
+    firstName: "Happy",
+    lastName: "Gillmore",
+    email: "cat@hat.bat",
+    password: "yourpassword",
+    createdAt: "2025-08-15T12:56:36.584Z",
+    updatedAt: "2025-08-15T12:56:36.585Z",
+  },
+]; // Remove [{}], start with empty array
 
 // Get user by ID
 const getUserRoute = createRoute({
@@ -170,7 +199,10 @@ userRoutes.openapi(createUserRoute, (c) => {
 
   const newUser: User = {
     id: crypto.randomUUID(),
-    ...userData,
+    firstName: userData.firstName,
+    lastName: userData.lastName,
+    email: userData.email,
+    password: userData.password,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -297,10 +329,12 @@ const JWTResponseSchema = z.object({
   token: z.string(),
 });
 
+export const authRoute = new OpenAPIHono();
+
 // Add authentication endpoint OpenAPI spec
 const loginRoute = createRoute({
   method: "post",
-  path: "/auth/login",
+  path: "/login",
   summary: "Authenticate user and return JWT token",
   description:
     "Authenticate a user with email and password, returning a JWT token for use as a Bearer token.",
@@ -377,12 +411,12 @@ function verifyJwt(token: string): { sub: string; email: string } | null {
   }
 }
 
-userRoutes.openapi(loginRoute, (c) => {
+authRoute.openapi(loginRoute, (c) => {
   const { email, password } = c.req.valid("json");
   const user = users.find((u) => u.email === email);
   let userData;
   try {
-    userData = CreateUserSchema.parse(c.req.valid("json"));
+    userData = AuthUserSchema.parse(c.req.valid("json"));
   } catch (err) {
     return c.json(
       {
